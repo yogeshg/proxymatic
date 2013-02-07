@@ -26,7 +26,7 @@ function checkState(sendResponse){
 		message:"State Update"
 	};
 	sendResponse(response);
-	console.log(JSON.stringify(response));
+	console.log("[checkState]\n"+JSON.stringify(response));
 	return false;
 }
 
@@ -61,6 +61,7 @@ function login(sendResponse){
 						var response = {type: "loggedin",state:state, message: "Successfully logged in."};
 						showPopupNotification("icon128.png",response.message,"For other apps, use Proxy_Host:10.10.78.21 Proxy_Port:3128",3000);
 						sendResponse(response);
+						console.log("[login]\n"+JSON.stringify(response));
 						if(!refreshVar){
 							refreshVar = setInterval(function(){refresh();},120000);
 						}
@@ -68,6 +69,7 @@ function login(sendResponse){
 						var response = {type: "loggedout",state:state, message: "Invalid log in."};
 						showPopupNotification("icon128.png",response.message,"Check log in credentials in options page",3000);
 						sendResponse(response);
+						console.log("[login]\n"+JSON.stringify(response));
 					}
 					} else {
 						// ERROR
@@ -79,6 +81,7 @@ function login(sendResponse){
 				var response = {type: "loggedin", state:state, message: "Already logged in."};
 				showPopupNotification("icon128.png","Already logged in.","Sign out your proxy to use this app.",3000)
 				sendResponse(response);
+				console.log("[login]\n"+JSON.stringify(response));
 			}
 		} else {
 			// ERROR
@@ -107,6 +110,7 @@ function logout(sendResponse){
 			}
 			showPopupNotification("icon128.png",response.message,"Thank You for using PS!",1000);
 			sendResponse(response);
+			console.log("[logout]\n"+JSON.stringify(response));
 		} else {
 			// ERROR
 		}
@@ -159,20 +163,14 @@ function check(sendResponse){
 	checkReq.onload=function (){
 		if(checkReq.readyState==4){
 			var response = new Object();
-			//console.log(checkReq.getAllResponseHeaders());
-			console.log(checkReq.responseText);
-			// IF VALIDATE
-			//keyExp = /<td align=right><B>(.*)<\/B><\/td>/g;
 			var usageKeys = checkReq.responseText.match(/<td align=right><B>(.*)<\/B><\/td>/g);
 			for(var i = 0; i < usageKeys.length; i++){
 				usageKeys[i]=/<td align=right><B>(.*)<\/B><\/td>/.exec(usageKeys[i])[1];
 			}
-			console.log(usageKeys);
 			var usageValues = checkReq.responseText.match(/<td align=right>([^<>]*)<\/td>/g);
 			for(var i = 0; i < usageValues.length; i++){
 				usageValues[i]=string2MB(/<td align=right>([^<>]*)<\/td>/.exec(usageValues[i])[1]);
 			}
-			console.log(usageValues);
 			var match = /(\d+[a-zA-Z]*)\/([a-zA-Z]*) (\d+[a-zA-Z]*)\/([a-zA-Z]*) (\d+[a-zA-Z]*)\/([a-zA-Z]*)/.exec(checkReq.responseText);
 			var quotaKeys = new Array();
 			var quotaValues = new Array();
@@ -180,8 +178,6 @@ function check(sendResponse){
 				quotaValues[i] = string2MB(match[2*i+1]);
 				quotaKeys[i] = match[2*i+2];
 			}
-			console.log(quotaKeys);
-			console.log(quotaValues);
 			var quotaUsed = new Array();
 			for(var i=0;i<quotaKeys.length;++i){
 				response[quotaKeys[i]]=new Object();
@@ -196,7 +192,6 @@ function check(sendResponse){
 					}
 				}
 			}
-			console.log(quotaUsed);
 			response.message=usage2String(response);
 			max=Math.max.apply(null, quotaUsed);
 			response.value=max;
@@ -211,8 +206,8 @@ function check(sendResponse){
 			} else if (max<=100){
 				response.color="#9E3B33";
 			}
-			console.log(JSON.stringify(response));
 			sendResponse(response);
+			console.log("[check]\n"+JSON.stringify(response));
 		} else {
 			// ERROR
 		}
