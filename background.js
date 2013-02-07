@@ -188,7 +188,7 @@ function check(sendResponse){
 				response[quotaKeys[i]].quota=quotaValues[i];
 				quotaUsed[i]=0;
 				for(var j=0;j<usageKeys.length;++j){
-					if(usageKeys[j].toLowerCase==quotaKeys[i].toLowerCase){
+					if(usageKeys[j].toLowerCase()==quotaKeys[i].toLowerCase()){
 						response[quotaKeys[i]].usage=usageValues[j];
 						quotaUsed[i]=100*usageValues[j]/quotaValues[i];
 						response[quotaKeys[i]].percent=quotaUsed[i];
