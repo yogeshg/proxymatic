@@ -151,7 +151,7 @@ function refresh(){
 
 function check(sendResponse){
 	var checkReq = new XMLHttpRequest();
-    checkReq.open("POST","https://proxy21.iitd.ernet.in/squish/squish1.cgi", true);
+    checkReq.open("POST",localStorage.proxyurl+"squish/squish1.cgi", true);
 	checkReq.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	var form =	"uid="+localStorage.username+
 				"&magic_word="+localStorage.password+
