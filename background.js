@@ -60,30 +60,46 @@ function login(sendResponse){
 									+"; Proxy_Host:10.10.78.21 Proxy_Port:3128";
 						showPopupNotification("icon128.png",response.message,msg,3000);
 						sendResponse(response);
+						// TODO: Change icon to green.
 						console.log("[login]\n"+JSON.stringify(response));
 						if(!refreshVar){
 							refreshVar = setInterval(function(){refresh();},120000);
 						}
 					} else {
-						var response = {type: "loggedout",state:state, message: "Invalid log in."};
-						showPopupNotification("icon128.png",response.message,"Check log in credentials in options page",3000);
-						sendResponse(response);
-						console.log("[login]\n"+JSON.stringify(response));
+					var response = {type: "loggedout",state:state, message: "Invalid log in."};
+					var failedRegex = /Either your userid and\/or password does'not match\./.exec(logReq.responseText);
+					var alreadyRegex = /(.*) already logged in from ([0-9\.]*)\./.exec(logReq.responseText);
+					var expiredRegex = /<h1>(Your session expired)<\/h1>/.exec(logReq.responseText);
+					var msg;
+					console.log(failedRegex);
+					console.log(alreadyRegex);
+					console.log(expiredRegex);
+					if (failedRegex){
+						msg = "Your username and/or password are incorrect. Please check credentials on Options page.";
+					} else if (alreadyRegex){
+						msg = "Username: "+alreadyRegex[1]+" is already logged in from "+alreadyRegex[2]+". Please logout from their or log in using a different username.";
+					} else if(expiredRegex){
+						msg = "The session you were logging in with has expired. Please try again.";
+					}
+					showPopupNotification("icon128.png",response.message,msg,3000);
+					sendResponse(response);
+					// TODO: Change icon to red/brown ???
+					console.log("[login]\n"+JSON.stringify(response));
 					}
 					} else {
-						// ERROR
+						// HTTP ERROR
 					}
 				}
 				logReq.send(form);
 				
 			} else {	// ALREADY LOGGED IN !!!
 				var response = {type: "loggedin", state:state, message: "Already logged in."};
-				showPopupNotification("icon128.png","Already logged in.","Sign out your proxy to use this app.",3000)
+				showPopupNotification("icon128.png",response.message,"Sign out your proxy to use this app.",3000)
 				sendResponse(response);
 				console.log("[login]\n"+JSON.stringify(response));
 			}
 		} else {
-			// ERROR
+			// HTTP ERROR
 		}
 	};
 	formReq.send();
@@ -92,8 +108,8 @@ function login(sendResponse){
 
 function logout(sendResponse){
 	var outReq = new XMLHttpRequest();
-	var form = 	 "sessionid="+state.sessionid+
-			"&action="+"logout";
+	var form = "sessionid="+state.sessionid+
+				"&action="+"logout";
 	outReq.open("POST",localStorage.proxyurl+"cgi-bin/proxy.cgi",true);
 	outReq.onload=function(){
 		if(outReq.readyState==4){
@@ -101,17 +117,18 @@ function logout(sendResponse){
 			console.log(logoutRegex);
 			state.logged=false;
 			state.sessionid="";
-			var response = {type: "loggedout", state:state, message: ""};
+			var response = {type: "loggedout", state:state};
 			if(logoutRegex) {
-				response.message="User has been Logged-Out."
+				response.message="User logged out."
 			} else {
-				response.message="User was not Logged-In.";
+				response.message="User was not logged in.";
 			}
 			showPopupNotification("icon128.png",response.message,"Thank You for using PS!",1000);
 			sendResponse(response);
+			// TODO: Change icon to red/brown/
 			console.log("[logout]\n"+JSON.stringify(response));
 		} else {
-			// ERROR
+			// HTTP ERROR
 		}
 	}
 	outReq.send(form);
@@ -129,15 +146,14 @@ function refresh(){
 		refReq.open("POST",localStorage.proxyurl+"cgi-bin/proxy.cgi",true);
 		refReq.onload=function (){
 			if(refReq.readyState==4){
-				//console.log(refReq.getAllResponseHeaders());
-				//console.log(refReq.responseText);
-				// IF VALIDATE
 				var successfulRegex = /logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(refReq.responseText);
 				console.log(successfulRegex);
 				if (successfulRegex){
 					showPopupNotification("icon128.png","Session Refreshed","Auto refreshing session every 2 minutes",1000);
 				} else {
 					showPopupNotification("icon128.png","Session Refresh Failed","Authentication Failed",1000);
+					// TODO: Change icon to yellow
+					// TODO: Try again in 1 minute
 				}
 			} else {
 				// ERROR
@@ -190,7 +206,7 @@ function check(sendResponse){
 					}
 				}
 			}
-			var response = new Object();
+			var response = {type: "usage"};
 			response.message=usage2String(usage);
 			max=Math.max.apply(null, quotaUsed);
 			response.value=max;
@@ -208,7 +224,7 @@ function check(sendResponse){
 			sendResponse(response);
 			console.log("[check]\n"+JSON.stringify(response));
 		} else {
-			// ERROR
+			// HTTP ERROR
 		}
 	};
 	checkReq.send(form);
