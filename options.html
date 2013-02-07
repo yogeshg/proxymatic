@@ -1,24 +1,18 @@
 <html>
   <head>
-	<title>ProxySquish</title>
+	<title>Proxymatic Options</title>
 	<link href="style.css" rel="stylesheet" type="text/css">
     <script src="options.js"></script>
   </head>
   <body><div id="hideoverflow"><div id="outer"><div id="inner">
     <h1>
-      <img src="icon.png">
-      ProxySquish
+      <img src="icon256.png" style="width:32px;height:32px;vertical-align:middle;" /> Proxymatic
     </h1>
 	
     <h2>Proxy Settings</h2>
     <form id="proxySettings">
 		<table>
 			<tr>
-				<td colspan=2>
-					Under Proxy?
-					<input type="checkbox" name="useproxy" checked></input>
-			</td>
-		</tr><tr>
 				<td>	username
 			</td><td>   <input type="text" name="username" />
 			</td>
@@ -28,7 +22,8 @@
 			</td>
 		</tr><tr>
 				<td>	proxycode
-			</td><td>   <input type="text" name="proxycode" />
+			</td><td>   <a title="21 for integrated, 22 for btech, 62 for mtech etc.">
+						<input type="text" name="proxycode" /></a>
 			</td>
 		</tr><tr>
 				<td colspan=2>
@@ -37,7 +32,7 @@
 		</tr><tr>
 				<td colspan=2>
 					Show Toasts?
-					<input type="checkbox" name="showtoasts" checked></input>
+					<input type="checkbox" name="showtoasts"></input>
 			</td>
 		</tr>
 		</table>

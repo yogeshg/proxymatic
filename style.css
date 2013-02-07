@@ -1,6 +1,14 @@
 h1,h2,h3,h4,h5,h6
 {
 	font-variant: small-caps;
+	padding: 5px 10px;border-radius:10px;-moz-border-radius:10px;
+	background-color:#E9B64D;
+	margin:10px 0px;
+}
+
+h1,h2
+{
+	font-variant: small-caps;
 	padding: 10px;border-radius:10px;-moz-border-radius:10px;
 	background-color:#E9B64D;
 }

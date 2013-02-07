@@ -1,10 +1,9 @@
 if (!localStorage.isInitialized) {
-  localStorage.isActivated = true;   // The display activation.
-  localStorage.useproxy=true
   localStorage.username="username"
   localStorage.password="password"
   localStorage.proxycode="21"
   localStorage.proxyurl="https://proxy"+localStorage.proxycode+".iitd.ernet.in/";
+  localStorage.showtoasts = true;
   localStorage.isInitialized = true; // The option initialization.
 }
 //	TODO FIX
@@ -66,16 +65,16 @@ function login(sendResponse){
 							refreshVar = setInterval(function(){refresh();},120000);
 						}
 					} else {
-					var response = {type: "loggedout",state:state, message: "Invalid log in."};
-					var failedRegex = /Either your userid and\/or password does'not match\./.exec(logReq.responseText);
+					var response = {type: "loggedout",state:state, message: "Failed log in."};
+					var invalidRegex = /Either your userid and\/or password does'not match\./.exec(logReq.responseText);
 					var alreadyRegex = /(.*) already logged in from ([0-9\.]*)\./.exec(logReq.responseText);
 					var expiredRegex = /<h1>(Your session expired)<\/h1>/.exec(logReq.responseText);
 					var msg;
-					console.log(failedRegex);
+					console.log(invalidRegex);
 					console.log(alreadyRegex);
 					console.log(expiredRegex);
-					if (failedRegex){
-						msg = "Your username and/or password are incorrect. Please check credentials on Options page.";
+					if (invalidRegex){
+						msg = "Your username and/or password are invalid. Please check credentials on Options page.";
 					} else if (alreadyRegex){
 						msg = "Username: "+alreadyRegex[1]+" is already logged in from "+alreadyRegex[2]+". Please logout from their or log in using a different username.";
 					} else if(expiredRegex){
@@ -123,7 +122,7 @@ function logout(sendResponse){
 			} else {
 				response.message="User was not logged in.";
 			}
-			showPopupNotification("icon128.png",response.message,"Thank You for using PS!",1000);
+			showPopupNotification("icon128.png",response.message,"Thank You for using Proxymatic!",1000);
 			sendResponse(response);
 			// TODO: Change icon to red/brown/
 			console.log("[logout]\n"+JSON.stringify(response));
@@ -253,10 +252,12 @@ function string2MB(str) {
 }
 
 function showPopupNotification(img,title,body,ms) {
-	notification = window.webkitNotifications.createNotification(
-					img,title,body);
-	notification.show();
-	setTimeout(function(){notification.cancel();},ms);
+	if(JSON.parse(localStorage.showtoasts)) {
+		notification = window.webkitNotifications.createNotification(
+						img,title,body);
+		notification.show();
+		setTimeout(function(){notification.cancel();},ms);
+	}
 }
 
 chrome.extension.onMessage.addListener(
