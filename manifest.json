@@ -1,0 +1,28 @@
+{
+  "name": "Proxymatic",
+  "version": "1.0.1",
+  "manifest_version": 2,
+  "description": "This extension is an app to manage proxy login under IIT Delhi Network. It also provides a neat interface to check your proxy usage",
+  "icons": { 	"32": "icon32.png",
+				"64": "icon64.png",
+				"128": "icon128.png",
+				"256": "icon256.png"
+				},
+  "permissions": ["notifications",
+				"<all_urls>"],
+  "browser_action": {
+    "default_icon": "icon32.png",
+    "default_popup": "popup.html"
+  },
+  "background": {
+	"persistent": true,
+	"scripts": ["background.js"]
+  },
+  "options_page": "options.html",
+  "web_accessible_resources": [
+    "icon32.png",
+    "icon64.png",
+    "icon128.png",
+    "icon256.png"
+  ]
+}
