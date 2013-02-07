@@ -35,15 +35,13 @@ function login(sendResponse){
     formReq.open("GET", "http://www.google.com", true);
     formReq.onload=function (){
 		if(formReq.readyState==4){
-			//console.log(formReq.getAllResponseHeaders());
-			//console.log(formReq.responseText);
-			// TODO: Improve sniffing mechanism
-			var formMatch = /<title>IIT Delhi Proxy Login<\/title>/.exec(formReq.responseText);
-			if(formMatch) {	// NOT LOGGED IN
-				var formMatch2 = /<input name="sessionid" type="hidden" value="(.*)">/.exec(formReq.responseText);
-				console.log(formMatch2);
+			var loginformRegex = /<title>IIT Delhi Proxy Login<\/title>/.exec(formReq.responseText);
+			var sessionidRegex = /<input name="sessionid" type="hidden" value="(.*)">/.exec(formReq.responseText);
+			console.log(loginformRegex);
+			console.log(sessionidRegex);
+			if(loginformRegex||sessionidRegex) {	// NOT LOGGED IN
 				var logReq = new XMLHttpRequest();
-				var form = 	 "sessionid="+formMatch2[1]+
+				var form = 	 "sessionid="+sessionidRegex[1]+
 						"&action="+"Validate"+
 						"&userid="+localStorage.username+
 						"&pass="+ localStorage.password
@@ -51,15 +49,16 @@ function login(sendResponse){
 				logReq.open("POST",localStorage.proxyurl+"cgi-bin/proxy.cgi",true);
 				logReq.onload=function (){
 					if(logReq.readyState==4){
-					//console.log(logReq.getAllResponseHeaders());
-					//console.log(logReq.responseText); // TODO FIX check validation
-					var validMatch = /You are logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(logReq.responseText);
-					console.log(validMatch);
-					if (validMatch){
+					var successfulRegex = /You are logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(logReq.responseText);
+					console.log(successfulRegex);
+					if (successfulRegex){
 						state.logged=true;
-						state.sessionid=formMatch2[1];
+						state.sessionid=sessionidRegex[1];
 						var response = {type: "loggedin",state:state, message: "Successfully logged in."};
-						showPopupNotification("icon128.png",response.message,"For other apps, use Proxy_Host:10.10.78.21 Proxy_Port:3128",3000);
+						var msg = "as "+successfulRegex[1]+" from "+successfulRegex[3]
+									+"; Autoconfig Proxy_URL:"+successfulRegex[2]
+									+"; Proxy_Host:10.10.78.21 Proxy_Port:3128";
+						showPopupNotification("icon128.png",response.message,msg,3000);
 						sendResponse(response);
 						console.log("[login]\n"+JSON.stringify(response));
 						if(!refreshVar){
@@ -98,12 +97,12 @@ function logout(sendResponse){
 	outReq.open("POST",localStorage.proxyurl+"cgi-bin/proxy.cgi",true);
 	outReq.onload=function(){
 		if(outReq.readyState==4){
-			var logoutMatch = /Session Terminated/i.exec(outReq.responseText);
-			console.log(logoutMatch);
+			var logoutRegex = /Session Terminated/i.exec(outReq.responseText);
+			console.log(logoutRegex);
 			state.logged=false;
 			state.sessionid="";
 			var response = {type: "loggedout", state:state, message: ""};
-			if(logoutMatch) {
+			if(logoutRegex) {
 				response.message="User has been Logged-Out."
 			} else {
 				response.message="User was not Logged-In.";
@@ -120,7 +119,6 @@ function logout(sendResponse){
 }
 
 function refresh(){
-	console.log("refresh");
 	if(state.logged) {
 		var refReq = new XMLHttpRequest();
 		var form = 	 "sessionid="+state.sessionid+
@@ -134,9 +132,9 @@ function refresh(){
 				//console.log(refReq.getAllResponseHeaders());
 				//console.log(refReq.responseText);
 				// IF VALIDATE
-				var validMatch = /logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(refReq.responseText);
-				console.log(validMatch);
-				if (validMatch){
+				var successfulRegex = /logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(refReq.responseText);
+				console.log(successfulRegex);
+				if (successfulRegex){
 					showPopupNotification("icon128.png","Session Refreshed","Auto refreshing session every 2 minutes",1000);
 				} else {
 					showPopupNotification("icon128.png","Session Refresh Failed","Authentication Failed",1000);
@@ -162,7 +160,7 @@ function check(sendResponse){
 				"&1=Proxy+Usage";
 	checkReq.onload=function (){
 		if(checkReq.readyState==4){
-			var response = new Object();
+			var usage = new Object();
 			var usageKeys = checkReq.responseText.match(/<td align=right><B>(.*)<\/B><\/td>/g);
 			for(var i = 0; i < usageKeys.length; i++){
 				usageKeys[i]=/<td align=right><B>(.*)<\/B><\/td>/.exec(usageKeys[i])[1];
@@ -171,28 +169,29 @@ function check(sendResponse){
 			for(var i = 0; i < usageValues.length; i++){
 				usageValues[i]=string2MB(/<td align=right>([^<>]*)<\/td>/.exec(usageValues[i])[1]);
 			}
-			var match = /(\d+[a-zA-Z]*)\/([a-zA-Z]*) (\d+[a-zA-Z]*)\/([a-zA-Z]*) (\d+[a-zA-Z]*)\/([a-zA-Z]*)/.exec(checkReq.responseText);
+			var quotaRegex = /(\d+[a-zA-Z]*)\/([a-zA-Z]*) (\d+[a-zA-Z]*)\/([a-zA-Z]*) (\d+[a-zA-Z]*)\/([a-zA-Z]*)/.exec(checkReq.responseText);
 			var quotaKeys = new Array();
 			var quotaValues = new Array();
-			for(var i = 0; 2*i+2<=match.length; ++i){
-				quotaValues[i] = string2MB(match[2*i+1]);
-				quotaKeys[i] = match[2*i+2];
+			for(var i = 0; 2*i+2<=quotaRegex.length; ++i){
+				quotaValues[i] = string2MB(quotaRegex[2*i+1]);
+				quotaKeys[i] = quotaRegex[2*i+2];
 			}
 			var quotaUsed = new Array();
 			for(var i=0;i<quotaKeys.length;++i){
-				response[quotaKeys[i]]=new Object();
-				response[quotaKeys[i]].quota=quotaValues[i];
+				usage[quotaKeys[i]]=new Object();
+				usage[quotaKeys[i]].quota=quotaValues[i];
 				quotaUsed[i]=0;
 				for(var j=0;j<usageKeys.length;++j){
 					if(usageKeys[j].toLowerCase()==quotaKeys[i].toLowerCase()){
-						response[quotaKeys[i]].usage=usageValues[j];
+						usage[quotaKeys[i]].usage=usageValues[j];
 						quotaUsed[i]=100*usageValues[j]/quotaValues[i];
-						response[quotaKeys[i]].percent=quotaUsed[i];
+						usage[quotaKeys[i]].percent=quotaUsed[i];
 						break;
 					}
 				}
 			}
-			response.message=usage2String(response);
+			var response = new Object();
+			response.message=usage2String(usage);
 			max=Math.max.apply(null, quotaUsed);
 			response.value=max;
 			if (max<=20){
@@ -205,7 +204,7 @@ function check(sendResponse){
 				response.color="#E48743";
 			} else if (max<=100){
 				response.color="#9E3B33";
-			}
+			} // TODO: this should work in pop.js // read pallete (only once) instead of static values.
 			sendResponse(response);
 			console.log("[check]\n"+JSON.stringify(response));
 		} else {
@@ -254,15 +253,6 @@ chrome.extension.onMessage.addListener(
 	} else if(request.type=="logout") {
 		return logout(sendResponse);
 	} else if(request.type=="checkusage") {
-		var response = {type: "usage", value: 50.00, icon: "50.png", message: "Your proxy usage is "+"2000 MB"+" of "+"4000 MB"};
 		return check(sendResponse);
 	}
-	
-	/*var notification = window.webkitNotifications.createNotification(
-    'icon128.png',				// The image.
-    'response.message',		// The title.
-    response.message		// The body.
-	);
-	notification.show();
-	setTimeout(function(){notification.cancel();},1000);*/
   });
