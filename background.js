@@ -49,8 +49,8 @@ function login(sendResponse){
 				logReq.onload=function (){
 					if(logReq.readyState==4){
 					var successfulRegex = /You are logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(logReq.responseText);
-					console.log(successfulRegex);
 					if (successfulRegex){
+						console.log(successfulRegex);
 						state.logged=true;
 						state.sessionid=sessionidRegex[1];
 						var response = {type: "loggedin",state:state, message: "Successfully logged in."};
@@ -68,6 +68,7 @@ function login(sendResponse){
 					var response = {type: "loggedout",state:state, message: "Failed log in."};
 					var invalidRegex = /Either your userid and\/or password does'not match\./.exec(logReq.responseText);
 					var alreadyRegex = /(.*) already logged in from ([0-9\.]*)\./.exec(logReq.responseText);
+					var squishedRegex = /You are squished\./.exec(logReq.responseText);
 					var expiredRegex = /<h1>(Your session expired)<\/h1>/.exec(logReq.responseText);
 					var msg;
 					if (invalidRegex){
@@ -76,6 +77,9 @@ function login(sendResponse){
 					} else if (alreadyRegex){
 						console.log(alreadyRegex);
 						msg = "Username: "+alreadyRegex[1]+" is already logged in from "+alreadyRegex[2]+". Please logout from their or log in using a different username.";
+					} else if(squishedRegex){
+						console.log(squishedRegex);
+						msg = "Your proxy has been squished, check usage. Please try another proxy.";
 					} else if(expiredRegex){
 						console.log(expiredRegex);
 						msg = "The session you were logging in with has expired. Please try again.";
