@@ -36,8 +36,8 @@ function login(sendResponse){
 		if(formReq.readyState==4){
 			var loginformRegex = /<title>IIT Delhi Proxy Login<\/title>/.exec(formReq.responseText);
 			var sessionidRegex = /<input name="sessionid" type="hidden" value="(.*)">/.exec(formReq.responseText);
-			console.log(loginformRegex);
-			console.log(sessionidRegex);
+			if(loginformRegex) {console.log(loginformRegex);}
+			if(sessionidRegex) {console.log(sessionidRegex);}
 			if(loginformRegex||sessionidRegex) {	// NOT LOGGED IN
 				var logReq = new XMLHttpRequest();
 				var form = 	 "sessionid="+sessionidRegex[1]+
@@ -70,14 +70,14 @@ function login(sendResponse){
 					var alreadyRegex = /(.*) already logged in from ([0-9\.]*)\./.exec(logReq.responseText);
 					var expiredRegex = /<h1>(Your session expired)<\/h1>/.exec(logReq.responseText);
 					var msg;
-					console.log(invalidRegex);
-					console.log(alreadyRegex);
-					console.log(expiredRegex);
 					if (invalidRegex){
+						console.log(invalidRegex);
 						msg = "Your username and/or password are invalid. Please check credentials on Options page.";
 					} else if (alreadyRegex){
+						console.log(alreadyRegex);
 						msg = "Username: "+alreadyRegex[1]+" is already logged in from "+alreadyRegex[2]+". Please logout from their or log in using a different username.";
 					} else if(expiredRegex){
+						console.log(expiredRegex);
 						msg = "The session you were logging in with has expired. Please try again.";
 					}
 					showPopupNotification("icon128.png",response.message,msg,3000);
@@ -181,8 +181,9 @@ function check(sendResponse){
 				usageKeys[i]=/<td align=right><B>(.*)<\/B><\/td>/.exec(usageKeys[i])[1];
 			}
 			var usageValues = checkReq.responseText.match(/<td align=right>([^<>]*)<\/td>/g);
+			console.log(usageValues);
 			for(var i = 0; i < usageValues.length; i++){
-				usageValues[i]=string2MB(/<td align=right>([^<>]*)<\/td>/.exec(usageValues[i])[1]);
+				usageValues[i]=string2MB(/<td align=right>(.*)<\/td>/.exec(usageValues[i])[1]);
 			}
 			var quotaRegex = /(\d+[a-zA-Z]*)\/([a-zA-Z]*) (\d+[a-zA-Z]*)\/([a-zA-Z]*) (\d+[a-zA-Z]*)\/([a-zA-Z]*)/.exec(checkReq.responseText);
 			var quotaKeys = new Array();
@@ -217,10 +218,14 @@ function check(sendResponse){
 				response.color="#E9B64D";
 			} else if (max<=80){
 				response.color="#E48743";
-			} else if (max<=100){
+			} else {
 				response.color="#9E3B33";
 			} // TODO: this should work in pop.js // read pallete (only once) instead of static values.
-			sendResponse(response);
+			try{
+				sendResponse(response);
+			} catch (e) {
+				showPopupNotification("icon128.png","Proxy Usage: "+response.value+"%",response.message,3000);
+			}
 			console.log("[check]\n"+JSON.stringify(response));
 		} else {
 			// HTTP ERROR
@@ -237,15 +242,22 @@ function usage2String(resp) {
 }
 
 function string2MB(str) {
-	var match = /[-+]?[0-9]*\.?[0-9]*([a-zA-Z]+)/.exec(str);
-	var num = parseFloat(match[0]);
-	var unit = match[1];
-	if (unit.toLowerCase()=="kb") {
-		num/=1024;
-	} else if (unit.toLowerCase()=="mb") {
-	} else if (unit.toLowerCase()=="gb") {
-		num*=1024;
-	} else {
+	var match = /([-+]?[0-9]*\.?[0-9]*)([a-zA-Z]*)/.exec(str);
+	try {
+		var num = parseFloat(match[1]);
+		var unit = match[2];
+		if (unit.toLowerCase()=="b") {
+			num/=(1024*1024);
+		} else if (unit.toLowerCase()=="kb") {
+			num/=1024;
+		} else if (unit.toLowerCase()=="mb"||unit.toLowerCase()=="") {
+			//num=num;
+		} else if (unit.toLowerCase()=="gb") {
+			num*=1024;
+		} else {
+			throw "unexpected unit";
+		}
+	} catch (e) {
 		num = str;
 	}
 	return num;
