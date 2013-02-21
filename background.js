@@ -6,11 +6,7 @@ if (!localStorage.isInitialized) {
   localStorage.showtoasts = true;
   localStorage.isInitialized = true; // The option initialization.
 }
-//	TODO FIX
-//	MAINTAIN STATE
-//	pop checks state
-//	response returns state + change-message
-//	sessionid in state
+
 var state = {
 	logged:false,
 	sessionid:""
@@ -48,15 +44,22 @@ function login(sendResponse){
 				logReq.open("POST",localStorage.proxyurl+"cgi-bin/proxy.cgi",true);
 				logReq.onload=function (){
 					if(logReq.readyState==4){
-					var successfulRegex = /You are logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(logReq.responseText);
-					if (successfulRegex){
+					var successfulRegex;
+					var invalidRegex;
+					var alreadyRegex;
+					var squishedRegex;
+					var expiredRegex;
+					if (successfulRegex = /You are logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(logReq.responseText)){
+						var proxyRegex = /Proxy_IP: ([\d.]*) Proxy_port: (\d*)/.exec(logReq.responseText);
 						console.log(successfulRegex);
 						state.logged=true;
 						state.sessionid=sessionidRegex[1];
 						var response = {type: "loggedin",state:state, message: "Successfully logged in."};
 						var msg = "as "+successfulRegex[1]+" from "+successfulRegex[3]
-									+"; Autoconfig Proxy_URL:"+successfulRegex[2]
-									+"; Proxy_Host:10.10.78.21 Proxy_Port:3128";
+									+"; Autoconfig Proxy_URL:"+successfulRegex[2];
+						if(proxyRegex) {
+									msg += "; Proxy_Host:"+proxyRegex[1]+" Proxy_Port:"+proxyRegex[2];
+						}
 						showPopupNotification("icon128.png",response.message,msg,3000);
 						sendResponse(response);
 						// TODO: Change icon to green.
@@ -65,34 +68,30 @@ function login(sendResponse){
 							refreshVar = setInterval(function(){refresh();},120000);
 						}
 					} else {
-					var response = {type: "loggedout",state:state, message: "Failed log in."};
-					var invalidRegex = /Either your userid and\/or password does'not match\./.exec(logReq.responseText);
-					var alreadyRegex = /(.*) already logged in from ([0-9\.]*)\./.exec(logReq.responseText);
-					var squishedRegex = /You are squished\./.exec(logReq.responseText);
-					var expiredRegex = /<h1>(Your session expired)<\/h1>/.exec(logReq.responseText);
-					var msg;
-					if (invalidRegex){
-						console.log(invalidRegex);
-						msg = "Your username and/or password are invalid. Please check credentials on Options page.";
-					} else if (alreadyRegex){
-						console.log(alreadyRegex);
-						msg = "Username: "+alreadyRegex[1]+" is already logged in from "+alreadyRegex[2]+". Please logout from their or log in using a different username.";
-					} else if(squishedRegex){
-						console.log(squishedRegex);
-						msg = "Your proxy has been squished, check usage. Please try another proxy.";
-					} else if(expiredRegex){
-						console.log(expiredRegex);
-						msg = "The session you were logging in with has expired. Please try again.";
-					}
-					showPopupNotification("icon128.png",response.message,msg,3000);
-					sendResponse(response);
-					// TODO: Change icon to red/brown ???
-					console.log("[login]\n"+JSON.stringify(response));
+						var response = {type: "loggedout",state:state, message: "Failed log in."};
+						var msg;
+						if (invalidRegex = /Either your userid and\/or password does'not match\./.exec(logReq.responseText)){
+							console.log(invalidRegex);
+							msg = "Your username and/or password are invalid. Please check credentials on Options page.";
+						} else if (alreadyRegex = /(.*) already logged in from ([0-9\.]*)\./.exec(logReq.responseText)){
+							console.log(alreadyRegex);
+							msg = "Username: "+alreadyRegex[1]+" is already logged in from "+alreadyRegex[2]+". Please logout from their or log in using a different username.";
+						} else if(squishedRegex = /You are squished\./.exec(logReq.responseText)){
+							console.log(squishedRegex);
+							msg = "Your proxy has been squished, check usage. Please try another proxy.";
+						} else if(expiredRegex = /<h1>(Your session expired)<\/h1>/.exec(logReq.responseText)){
+							console.log(expiredRegex);
+							msg = "The session you were logging in with has expired. Please try again.";
+						}
+						showPopupNotification("icon128.png",response.message,msg,3000);
+						sendResponse(response);
+						// TODO: Change icon to red/brown ???
+						console.log("[login]\n"+JSON.stringify(response));
 					}
 					} else {
 						// HTTP ERROR
 					}
-				}
+				};
 				logReq.send(form);
 				
 			} else {	// ALREADY LOGGED IN !!!
@@ -117,11 +116,11 @@ function logout(sendResponse){
 	outReq.onload=function(){
 		if(outReq.readyState==4){
 			var logoutRegex = /Session Terminated/i.exec(outReq.responseText);
-			console.log(logoutRegex);
 			state.logged=false;
 			state.sessionid="";
 			var response = {type: "loggedout", state:state};
 			if(logoutRegex) {
+				console.log(logoutRegex);
 				response.message="User logged out."
 			} else {
 				response.message="User was not logged in.";
@@ -133,7 +132,7 @@ function logout(sendResponse){
 		} else {
 			// HTTP ERROR
 		}
-	}
+	};
 	outReq.send(form);
 	return true;
 }
@@ -150,8 +149,8 @@ function refresh(){
 		refReq.onload=function (){
 			if(refReq.readyState==4){
 				var successfulRegex = /logged in successfully as (.*)\((.*)\) from ([0-9\.]*)/.exec(refReq.responseText);
-				console.log(successfulRegex);
 				if (successfulRegex){
+					console.log(successfulRegex);
 					showPopupNotification("icon128.png","Session Refreshed","Auto refreshing session every 2 minutes",1000);
 				} else {
 					showPopupNotification("icon128.png","Session Refresh Failed","Authentication Failed",1000);
@@ -240,9 +239,9 @@ function check(sendResponse){
 }
 
 function usage2String(resp) {
-	return "Week: "+resp.week.percent.toFixed(2)+"% ("+resp.week.usage+"MB of "+resp.week.quota+"MB); "
-	+"Month: "+resp.month.percent.toFixed(2)+"% ("+resp.month.usage+"MB of "+resp.month.quota+"MB); "
-	+"Year: "+resp.year.percent.toFixed(2)+"% ("+resp.year.usage+"MB of "+resp.year.quota+"MB).";
+	return "Week: "+resp.week.percent.toFixed(2)+"% ("+resp.week.usage.toFixed(0)+"MB of "+resp.week.quota.toFixed(0)+"MB); "
+	+"Month: "+resp.month.percent.toFixed(2)+"% ("+resp.month.usage.toFixed(0)+"MB of "+resp.month.quota.toFixed(0)+"MB); "
+	+"Year: "+resp.year.percent.toFixed(2)+"% ("+resp.year.usage.toFixed(0)+"MB of "+resp.year.quota.toFixed(0)+"MB).";
 }
 
 function string2MB(str) {
