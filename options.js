@@ -18,7 +18,7 @@ window.addEventListener('load', function() {
   
   proxySettings.save.onclick = function(){save()};
   proxySettings.showtoasts.onchange = function(){
-	console.log(proxySettings.showtoasts.checked);
-	console.log(localStorage.showtoasts);
-  localStorage.showtoasts = proxySettings.showtoasts.checked};
+	localStorage.showtoasts = proxySettings.showtoasts.checked};
+  proxySettings.username.onchange = function(){
+	proxySettings.password.value = ''};
 });
