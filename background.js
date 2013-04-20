@@ -227,7 +227,7 @@ function check(sendResponse){
 			try{
 				sendResponse(response);
 			} catch (e) {
-				showPopupNotification("icon128.png","Proxy Usage: "+response.value+"%",response.message,3000);
+				showPopupNotification("icon128.png","Proxy Usage: "+response.value.toFixed(2)+"%",response.message,3000);
 			}
 			console.log("[check]\n"+JSON.stringify(response));
 		} else {
